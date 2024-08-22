@@ -15,7 +15,7 @@ details.
 ### Other changes
 
 - Add ppxlib's AST pretty-printing utilities in `Ppxlib.Pp_ast` and
-  a `ppxlib-pp-ast` executable (#<PR_NUMBER>, @NathanReb)
+  a `ppxlib-pp-ast` executable (#517, @NathanReb)
 
 0.33.0 (2024-07-22)
 -------------------
