@@ -8,4 +8,5 @@
  (action
    (progn
      (system "mkdir -p %{project_root}/_doc/_html/ppxlib/assets/images")
+     (system "chmod -R a+rw %{project_root}/_doc/_html/ppxlib/assets/images")
      (system "cp -R ./images/ %{project_root}/_doc/_html/ppxlib/assets/images/"))))
