@@ -4,6 +4,8 @@ INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
 EXAMPLE_DESCRIPTIONS := \
 	"example-building-ast:Demonstrates how to build AST" \
 	"example-destructuring-ast:Demonstrates how to destructure an AST" \
+	"example-context-free:Demonstrates how to use context free transformations" \
+	"example-global-transformation:Demonstrates how to use global transformations"
 
 .PHONY: help
 help: ## Print this help message

@@ -1,0 +1,57 @@
+{0 Writing PPXs}
+
+{1:table-of-contents Table of Contents}
+
+- {{!section-description} Description}
+- {{!section-transformations} Transformations}
+- {{!section-how} How}
+- {{!section-"next-steps"} Next Steps}
+
+{1:description Description}
+
+After knowing what is an {{!page-"example-ast"} AST}, how to {{!page-"example-ast-building"} build an AST} and {{!page-"example-ast-destructing"} destructure it}, we can now write our own PPX in OCaml.
+
+{1:transformations Transformations}
+
+The soul of a PPX is the transformation. We want to get our AST and transform it into something else, like a new AST or lint errors.
+
+Those transformations can be divided into two categories that we will cover on nested folders:
+
+- {{!page-"example-writing-ppxs-context-free"} Context-free transformations}
+- {{!page-"example-writing-ppxs-global"} Global transformations}
+
+And they can work in different phases:
+
+- Lint (Global)
+- Preprocess (Global)
+- Instrumentation - Before (Global)
+- Context-free
+- Global Transformation (Global)
+- Instrumentation - After (Global)
+
+The following diagram shows the order of the phases and Driver's methods:
+
+{%html:
+<figure>
+  <img
+  style="width: 100%;"
+  src="./assets/images/ppxlib-phases.png"
+  alt="The beautiful MDN logo.">
+  <small><figcaption>Driver's methods phases diagram.<a href="https://x.com/_anmonteiro/status/1644031054544789504"> (reference)</a></figcaption></small>
+</figure>
+%}
+
+{1:how How}
+
+PPXs commonly follow these steps:
+
+- Match the AST we want.
+- Work with the AST. For example:
+{ul {- Returning a new AST. Add new functions, change the name of a variable, etc.}
+{- Linting the code.}
+{- or doing anything else. Really, you're programming, everything is possible!}
+}
+
+{1:next-steps Next Steps}
+
+On the next section, we will learn more about Context Free transformations. {{!page-"example-writing-ppxs-context-free"} Read more}
