@@ -72,6 +72,10 @@ bench: ## Run benchmarks
 	dune build bench --profile release
 	dune exec bench/bench.exe
 
+.PHONY: runtest-example
+runtest-example: ## Run test for example
+	DUNE_CONFIG__GLOBAL_LOCK=disabled opam exec -- dune runtest ./examples/3-Testing-PPXs/demo
+
 .PHONY: example-<target>
 example-%: ## Run example with specified target, e.g. make example-global-transformation
 	DUNE_CONFIG__GLOBAL_LOCK=disabled opam exec -- dune exec $*-example

@@ -1,0 +1,122 @@
+{0 Testing PPXs}
+
+{1 Table of Contents}
+
+- {{!section-description} Description}
+- {{!section-"types-of-tests"} Types of Tests}
+- {{!section-"implementation-tests"} Implementation Tests}
+{ul
+  {- {{!section-"example-testing-a-simple-transformation"} Example: Testing a Simple Transformation}}
+  {- {{!section-"example-testing-a-more-complex-transformation"} Example: Testing a More Complex Transformation}}}
+
+- {{!section-"snapshot-tests"} Snapshot Tests}
+{ul
+  {- {{!section-"example-creating-a-snapshot-test"} Example: Creating a Snapshot Test}}
+  {- {{!section-"example-snapshot-test-for-a-module-transformation"} Example: Snapshot Test for a Module Transformation}}}
+
+- {{!section-"conclusion"} Conclusion}
+
+{1:description Description}
+
+Testing PPXs is crucial to ensure that your transformations work as expected and do not introduce bugs into your codebase. This section will guide you through the process of testing PPXs using both implementation tests and snapshot tests.
+
+{1:types-of-tests Types of Tests}
+
+1. {b Implementation Tests}: These tests verify that the PPX transformations produce the expected output for given input code. They are typically written using a testing framework like Alcotest.
+
+2. {b Snapshot Tests}: These tests capture the output of a PPX transformation and compare it against a previously saved "snapshot". This is useful for ensuring that changes to the PPX do not unintentionally alter the output.
+
+{1:implementation-tests Implementation Tests}
+
+Implementation tests involve writing test cases that check the behavior of your PPX transformations. You can use a testing framework like Alcotest to write these tests.
+
+{2:example-testing-a-simple-transformation Example: Testing a Simple Transformation}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/3-Testing-PPXs/demo/test/test_sample.ml#L3-L6}🔗 Sample Code}
+
+Consider a PPX that transforms `[%one]` into `1`. You can write a test case to verify this transformation:
+
+{[
+let test_one () =
+  let one = [%one] in
+  Alcotest.check Alcotest.int "should be equal" one 1
+]}
+
+{2:example-testing-a-more-complex-transformation Example: Testing a More Complex Transformation}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/3-Testing-PPXs/demo/test/test_sample.ml#L11-L23}🔗 Sample Code}
+
+For a more complex transformation, such as a PPX that generates `to_string` and `from_string` functions for a variant type, you can write a test case like this:
+
+{[
+let test_enum () =
+  let assert_string left right =
+    Alcotest.check Alcotest.string "should be equal" right left
+  in
+  let rock = GameEnum.to_string Rock in
+  let paper = GameEnum.to_string (GameEnum.from_string "Paper") in
+  let stick =
+    try GameEnum.to_string (GameEnum.from_string "Stick")
+    with _ -> "Stick is not a valid value"
+  in
+  let () = assert_string rock "Rock" in
+  let () = assert_string paper "Paper" in
+  assert_string stick "Stick is not a valid value"
+]}
+
+{1:snapshot-tests Snapshot Tests}
+
+Snapshot tests are useful for verifying that the output of a PPX transformation remains consistent over time. They involve capturing the output of a transformation and comparing it against a saved snapshot.
+
+{2:example-creating-a-snapshot-test Example: Creating a Snapshot Test}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/3-Testing-PPXs/demo/test/mel_obj.t#L1-L6}🔗 Sample Code}
+
+To create a snapshot test, you can use a tool like `ocamlformat` to format the output of your PPX transformation and compare it against a saved snapshot:
+
+{[
+$ cat > input.ml << EOF
+let one = [%one]
+EOF
+
+$ ./standalone.exe -impl input.ml | ocamlformat - --enable-outside-detected-project --impl | tee output.ml
+let one = 1
+]}
+
+{2:example-snapshot-test-for-a-module-transformation Example: Snapshot Test for a Module Transformation}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/3-Testing-PPXs/demo/test/mel_obj.t#L15-L35}🔗 Sample Code}
+
+For a more complex transformation, such as a module with a `[@enum]` attribute, you can create a snapshot test like this:
+
+{[
+$ cat > input.ml << EOF
+module GameEnum = struct
+  type t = Rock | Paper | Scissors
+end [@enum]
+EOF
+
+$ ./standalone.exe -impl input.ml | ocamlformat - --enable-outside-detected-project --impl | tee output.ml
+module GameEnum = struct
+  type t = Rock | Paper | Scissors
+
+  let from_string value =
+    match value with
+    | "Rock" -> Rock
+    | "Paper" -> Paper
+    | "Scissors" -> Scissors
+    | _ -> raise (Invalid_argument "Argument doesn't match variants")
+  [@@warning "-32"]
+
+  let to_string value =
+    match value with
+    | Rock -> "Rock"
+    | Paper -> "Paper"
+    | Scissors -> "Scissors"
+  [@@warning "-32"]
+end
+]}
+
+{1:conclusion Conclusion}
+
+Testing PPXs is essential to ensure that your transformations are correct and maintainable. By using both implementation tests and snapshot tests, you can verify that your PPX transformations produce the expected output and remain consistent over time.
