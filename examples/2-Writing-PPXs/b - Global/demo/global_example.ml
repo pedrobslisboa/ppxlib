@@ -43,9 +43,9 @@ let _ =
 
 (* Uncomment the code bellow to see the error *)
 (* module GameEnumError = struct
-  type _t = Rock | Paper | Scissors
+     type _t = Rock | Paper | Scissors
 
-  module GameEnum = struct
-    type t = Rock | Paper | Scissors
-  end [@enum]
-end [@enum] *)
+     module GameEnum = struct
+       type t = Rock | Paper | Scissors
+     end [@enum]
+   end [@enum] *)
