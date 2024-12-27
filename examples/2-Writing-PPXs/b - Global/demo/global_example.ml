@@ -1,8 +1,5 @@
-let demo_name = "Global Demo"
-let _ = demo_name
-
 (* Uncomment the code bellow to see the lint error *)
-(* let name = "John Doe" *)
+(* let demo_name = "Global Demo" *)
 
 (* module enum *)
 let _ = print_endline "\n# Enum"

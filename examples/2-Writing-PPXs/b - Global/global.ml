@@ -72,7 +72,7 @@ module Lint = struct
         let loc = mb.pvb_loc in
         match mb.pvb_pat.ppat_desc with
         | Ppat_var { txt = name; _ } ->
-            if String.starts_with name ~prefix:"demo_" then acc
+            if not (String.starts_with name ~prefix:"demo_") then acc
             else
               Driver.Lint_error.of_string loc
                 "Ops, variable name must not start with demo_"
@@ -82,7 +82,7 @@ module Lint = struct
 end
 
 let _ =
-  Driver.register_transformation "enum2" ~lint_impl:(fun st ->
+  Driver.register_transformation "global_lint" ~lint_impl:(fun st ->
       Lint.traverse#structure st [])
 
 module PreProcess = struct
@@ -106,7 +106,7 @@ module PreProcess = struct
 end
 
 let _ =
-  Driver.register_transformation "enum" ~impl:PreProcess.traverse#structure
+  Driver.register_transformation "global_enum" ~impl:PreProcess.traverse#structure
 
 module Global = struct
   let traverse =
@@ -134,4 +134,4 @@ module Global = struct
     end
 end
 
-let _ = Driver.register_transformation "enum2" ~impl:Global.traverse#structure
+let _ = Driver.register_transformation "global_enum2" ~impl:Global.traverse#structure
