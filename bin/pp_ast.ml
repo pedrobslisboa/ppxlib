@@ -18,6 +18,29 @@ module Ast = struct
     | Typ of core_type
 end
 
+let rec simple_val_to_yojson : Pp_ast.simple_val -> Yojson.Basic.t = function
+  | Unit -> `Null
+  | Int i -> `Int i
+  | String s -> `String s
+  | Special s -> `String s
+  | Bool b -> `Bool b
+  | Char c -> `String (String.make 1 c)
+  | Float f -> `Float f
+  | Int32 i32 -> `Int (Int32.to_int i32)
+  | Int64 i64 -> `Int (Int64.to_int i64)
+  | Nativeint ni -> `Int (Nativeint.to_int ni)
+  | Array l -> `List (List.map simple_val_to_yojson l)
+  | Tuple l -> `List (List.map simple_val_to_yojson l)
+  | List l -> `List (List.map simple_val_to_yojson l)
+  | Record fields ->
+      `Assoc (List.map (fun (k, v) -> (k, simple_val_to_yojson v)) fields)
+  | Constr (cname, []) -> `String cname
+  | Constr (cname, [ x ]) -> `Assoc [ (cname, simple_val_to_yojson x) ]
+  | Constr (cname, l) ->
+      `Assoc [ (cname, `List (List.map simple_val_to_yojson l)) ]
+
+let json_printer fmt value = Yojson.Basic.pp fmt (simple_val_to_yojson value)
+
 module Input = struct
   type t = Stdin | File of string | Source of string
 
@@ -66,13 +89,13 @@ let load_input ~kind ~input_name input =
   | (Expression | Pattern | Core_type), _ | _, Source _ ->
       parse_node ~kind ~input_name input
 
-let pp_ast ~config ast =
+let pp_ast ~config ?printer ast =
   match (ast : Ast.t) with
-  | Str str -> Pp_ast.structure ~config Format.std_formatter str
-  | Sig sig_ -> Pp_ast.signature ~config Format.std_formatter sig_
-  | Exp exp -> Pp_ast.expression ~config Format.std_formatter exp
-  | Pat pat -> Pp_ast.pattern ~config Format.std_formatter pat
-  | Typ typ -> Pp_ast.core_type ~config Format.std_formatter typ
+  | Str str -> Pp_ast.structure ~config ?printer Format.std_formatter str
+  | Sig sig_ -> Pp_ast.signature ~config ?printer Format.std_formatter sig_
+  | Exp exp -> Pp_ast.expression ~config ?printer Format.std_formatter exp
+  | Pat pat -> Pp_ast.pattern ~config ?printer Format.std_formatter pat
+  | Typ typ -> Pp_ast.core_type ~config ?printer Format.std_formatter typ
 
 let named f = Cmdliner.Term.(app (const f))
 
@@ -96,6 +119,10 @@ let loc_mode =
     (`Full, Cmdliner.Arg.info ~doc [ "full-locs" ])
   in
   named (fun x -> `Loc_mode x) Cmdliner.Arg.(value & vflag `Short [ full_locs ])
+
+let json =
+  let doc = "Show AST as json" in
+  named (fun x -> `Json x) Cmdliner.Arg.(value & flag & info ~doc [ "json" ])
 
 let kind =
   let make_vflag (flag, (kind : Kind.t), doc) =
@@ -126,7 +153,7 @@ let input =
 let errorf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
-    (`Kind kind) (`Input input) =
+    (`Json json) (`Kind kind) (`Input input) =
   let open Stdppx.Result in
   let kind =
     match kind with
@@ -148,12 +175,14 @@ let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
   in
   let ast = load_input ~kind ~input_name input in
   let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode () in
-  pp_ast ~config ast;
+  let custom_printer = if json then Some json_printer else None in
+  pp_ast ~config ?printer:custom_printer ast;
   Format.printf "%!\n";
   Ok ()
 
 let term =
-  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+  Cmdliner.Term.(
+    const run $ show_attrs $ show_locs $ loc_mode $ json $ kind $ input)
 
 let tool_name = "ppxlib-pp-ast"
 

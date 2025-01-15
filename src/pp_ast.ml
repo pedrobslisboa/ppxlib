@@ -46,7 +46,10 @@ let pp_collection ~pp_elm ~open_ ~close ~sep fmt l =
       List.iter tl ~f:(fun sv -> Format.fprintf fmt "%s %a@," sep pp_elm sv);
       Format.fprintf fmt "%s@]" close
 
-let rec pp_simple_val fmt simple_val =
+type printer = Format.formatter -> simple_val -> unit
+
+let rec pp_simple_val : printer =
+ fun fmt simple_val ->
   match simple_val with
   | Unit -> Format.fprintf fmt "()"
   | Int i -> Format.fprintf fmt "%i" i
@@ -303,30 +306,30 @@ class lift_simple_val =
   end
 
 type 'a pp = Format.formatter -> 'a -> unit
-type 'a configurable = ?config:Config.t -> 'a pp
+type 'a configurable = ?config:Config.t -> ?printer:printer -> 'a pp
 type 'a configured = 'a pp
 
 module type S = sig
-  type 'a printer
+  type 'a ast_printer
 
-  val structure : structure printer
-  val structure_item : structure_item printer
-  val signature : signature printer
-  val signature_item : signature_item printer
-  val expression : expression printer
-  val pattern : pattern printer
-  val core_type : core_type printer
+  val structure : structure ast_printer
+  val structure_item : structure_item ast_printer
+  val signature : signature ast_printer
+  val signature_item : signature_item ast_printer
+  val expression : expression ast_printer
+  val pattern : pattern ast_printer
+  val core_type : core_type ast_printer
 end
 
 module type Conf = sig
   val config : Config.t
 end
 
-module type Configured = S with type 'a printer = 'a configured
-module type Configurable = S with type 'a printer = 'a configurable
+module type Configured = S with type 'a ast_printer = 'a configured
+module type Configurable = S with type 'a ast_printer = 'a configurable
 
 module Make (Conf : Conf) : Configured = struct
-  type 'a printer = 'a configured
+  type 'a ast_printer = 'a configured
 
   let lsv =
     let lift_simple_val = new lift_simple_val in
@@ -351,7 +354,7 @@ module Default = Make (struct
   let config = Config.default
 end)
 
-type 'a printer = 'a configurable
+type 'a ast_printer = 'a configurable
 
 let lift_simple_val = new lift_simple_val
 
@@ -363,8 +366,8 @@ let with_config ~config ~f =
   res
 
 let pp_with_config (type a) (lifter : a -> simple_val)
-    ?(config = Config.default) fmt (x : a) =
-  with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
+    ?(config = Config.default) ?(printer = pp_simple_val) fmt (x : a) =
+  with_config ~config ~f:(fun () -> printer fmt (lifter x))
 
 let structure = pp_with_config lift_simple_val#structure
 let structure_item = pp_with_config lift_simple_val#structure_item

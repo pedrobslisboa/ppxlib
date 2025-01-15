@@ -60,28 +60,46 @@ module Config : sig
           be. *)
 end
 
+type simple_val =
+  | Unit
+  | Int of int
+  | String of string
+  | Bool of bool
+  | Char of char
+  | Array of simple_val list
+  | Float of float
+  | Int32 of int32
+  | Int64 of int64
+  | Nativeint of nativeint
+  | Record of (string * simple_val) list
+  | Constr of string * simple_val list
+  | Tuple of simple_val list
+  | List of simple_val list
+  | Special of string
+
+type printer = Format.formatter -> simple_val -> unit
 type 'a pp = Format.formatter -> 'a -> unit
-type 'a configurable = ?config:Config.t -> 'a pp
+type 'a configurable = ?config:Config.t -> ?printer:printer -> 'a pp
 type 'a configured = 'a pp
 
 module type S = sig
-  type 'a printer
+  type 'a ast_printer
 
-  val structure : structure printer
-  val structure_item : structure_item printer
-  val signature : signature printer
-  val signature_item : signature_item printer
-  val expression : expression printer
-  val pattern : pattern printer
-  val core_type : core_type printer
+  val structure : structure ast_printer
+  val structure_item : structure_item ast_printer
+  val signature : signature ast_printer
+  val signature_item : signature_item ast_printer
+  val expression : expression ast_printer
+  val pattern : pattern ast_printer
+  val core_type : core_type ast_printer
 end
 
 module type Conf = sig
   val config : Config.t
 end
 
-module type Configured = S with type 'a printer = 'a configured
-module type Configurable = S with type 'a printer = 'a configurable
+module type Configured = S with type 'a ast_printer = 'a configured
+module type Configurable = S with type 'a ast_printer = 'a configurable
 
 module Make (Conf : Conf) : Configured [@@ocaml.warning "-67"]
 
