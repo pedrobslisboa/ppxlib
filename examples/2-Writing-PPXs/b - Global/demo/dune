@@ -1,0 +1,6 @@
+(executable
+ (name global_transformation_example)
+ (public_name global-transformation-example)
+ (package ppxlib)
+ (preprocess
+  (pps global_transformation)))
